@@ -1,0 +1,77 @@
+server:
+  port: 8087
+  servlet:
+    context-path: /api/authorization
+
+management:
+  server:
+    port: 8187
+  endpoint:
+    shutdown:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/postgres
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+  liquibase:
+    default-schema: authorization
+    change-log: db/changelog/db.changelog-master.yaml
+    enabled: true
+    drop-first: false
+  kafka:
+    topics:
+      auth-login: "auth.login"
+      auth-validate: "auth.validate"
+      auth-response: "auth.response"
+      user-create: "user.create"
+      user-get: "user.get"
+      user-delete: "user.delete"
+      user-update: "user.update"
+      user-response: "user.response"
+    consumer:
+      group-id: authorization-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.bank.authorization.dto"
+        spring.json.use.type.headers: false
+        spring.json.ignore.unknown.properties: true
+        spring.json.value.default.type: com.bank.authorization.dto.KafkaMessage
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  application:
+    name: authorization-app
+
+app:
+  init-users:
+    admin:
+      username: 123
+      password: "admin"
+    user:
+      username: 124
+      password: "user"
+
+jwt:
+  secret: "U3VwZXJTZWNyZXRLZXlGb3JKV1RUb2tlbkdlbmVyYXRpb25XaXRoQXRMZWFzdDQ4Q2hhcnM="
+  expiration: 86400000
+logging:
+  level:
+    root: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %level - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/application.log
